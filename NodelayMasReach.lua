@@ -1,9 +1,38 @@
 if game.PlaceId == 1597763879 or game.PlaceId == 335760407 then
+    -- 🛡️ BYPASS ANTICHEAT AVANZADO
     local Players = game:GetService("Players")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local player = Players.LocalPlayer
-    local mouse = player:GetMouse()
-    local UIS = game:GetService("UserInputService")
-    local RunService = game:GetService("RunService")
+    local char = player.Character or player.CharacterAdded:Wait()
+    local spoof = {}
+    local genv = getgenv()
+    genv.Data = spoof
+
+    -- Spoof básico
+    spoof.WalkSpeed = 16
+    spoof.JumpPower = 50
+    spoof.Health = 100
+    spoof.Humanoid = char:FindFirstChildOfClass("Humanoid")
+
+    -- Neutraliza conexiones sospechosas
+    for _, v in pairs(getconnections(game.DescendantAdded)) do
+        pcall(function()
+            if tostring(v.Function):lower():find("kick") then
+                v:Disable()
+            end
+        end)
+    end
+
+    -- Neutraliza detecciones comunes
+    if hookmetamethod then
+        hookmetamethod(game, "__namecall", function(self, ...)
+            local method = getnamecallmethod()
+            if method == "Kick" or method == "kick" then
+                return
+            end
+            return self(...);
+        end)
+    end
 
     -- GUI
     local gui = Instance.new("ScreenGui", game.CoreGui)
@@ -12,14 +41,13 @@ if game.PlaceId == 1597763879 or game.PlaceId == 335760407 then
     local frame = Instance.new("Frame", gui)
     frame.Size = UDim2.new(0, 320, 0, 200)
     frame.Position = UDim2.new(0.35, 0, 0.3, 0)
-    frame.BackgroundTransparency = 0 -- Fondo visible
-    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    frame.BackgroundTransparency = 1
     frame.Active = true
     frame.Draggable = true
 
     local bg = Instance.new("ImageLabel", frame)
     bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.Image = "rbxassetid://1396281723321290882" -- Fondo visible personalizado
+    bg.Image = "rbxassetid://1396281723321290882" -- Fondo
     bg.BackgroundTransparency = 0
     bg.ScaleType = Enum.ScaleType.Crop
 
@@ -59,21 +87,26 @@ if game.PlaceId == 1597763879 or game.PlaceId == 335760407 then
         end
     end
 
-    -- FUNCIÓN REACH 6 STUDS
+    -- FUNCIÓN REACH
     local function applyReach()
-        local character = player.Character or player.CharacterAdded:Wait()
-        for _, partName in ipairs({ "Right Arm", "Left Arm", "Right Leg", "Left Leg" }) do
-            local limb = character:FindFirstChild(partName)
-            if limb and limb:IsA("BasePart") then
-                limb.Size = Vector3.new(6, 6, 6)
-                limb.Transparency = 1
-                limb.CanCollide = false
+        local limbs = { "Right Arm", "Left Arm", "Right Leg", "Left Leg" }
+        for _, limb in pairs(limbs) do
+            local part = char:FindFirstChild(limb)
+            if part and part:IsA("BasePart") then
+                local selection = part:FindFirstChild("SelectionBox") or Instance.new("SelectionBox", part)
+                selection.Adornee = part
+                selection.Color3 = Color3.fromRGB(0, 255, 255)
+                selection.LineThickness = 0.05
+                part.Size = Vector3.new(6, 6, 6)
+                part.Massless = true
+                part.CanCollide = false
+                part.Transparency = 0.5
             end
         end
     end
 
-    -- APLICAR EFECTOS EN CADA FRAME
-    RunService.Heartbeat:Connect(function()
+    -- AUTO-APLICAR CADA FRAME
+    game:GetService("RunService").Heartbeat:Connect(function()
         enhanceBall()
         applyReach()
     end)
